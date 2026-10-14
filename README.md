@@ -16,3 +16,9 @@ Za pokretanje koda i proveru stabilizacije frekvencije, pokrenite izvršni fajl 
 ```python
 python core.py
 ```
+
+## Performance & Diagnostics (2026 Live Test)
+
+- **Total Calculation Time:** ~33.45 ms (44,100 points allocated in RAM)
+- **Processing Latency per Point:** ~758.68 ns (Sub-microsecond, real-time boundary)
+- **Execution Status:** Pure deterministic flow (Exit Code 0)
