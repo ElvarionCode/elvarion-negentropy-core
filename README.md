@@ -147,7 +147,7 @@ Power draw (`CPU Package Power`) was sampled directly from the processor's hardw
 ### Compilation & Replication
 Compiled with full hardware vectorization flags (`GCC / MinGW`):
 ```bash
-g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_escalation_benchmark.cpp -o elvarion_joules.exe
+g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_joules_benchmark.cpp  -o elvarion_joules.exe
 ```
 
 ### Empirical Silicon Results (10-Second Continuous Load — 2-Run Mean)
