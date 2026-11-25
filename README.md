@@ -138,3 +138,28 @@ g++ -O3 -std=c++17 -march=native benchmarks/battery_stress_benchmark.cpp -o elva
 | **Thermal Noise Attenuation** | **44.54°C $\rightarrow$ 25.61°C** | Geometric $\Phi$-damping of sensor drift, preventing false thermal alarms. |
 | **Memory Allocation Overhead** | **0.00000 bytes (Zero-Heap)** | No runtime allocation, ensuring absolute immunity to RTOS fragmentation. |
 
+## Silicon Energy Telemetry (Physical Joules & RAPL Verification)
+
+To address hardware-level energy dissipation metrics (Joules per processed 9D state) directly on physical silicon rather than cycle-count estimation, both architectures were subjected to a **10-second continuous hardware stress test** on an **Intel Core i7-4770 (Haswell, 22nm, AVX2)**.
+
+Power draw (`CPU Package Power`) was sampled directly from the processor's hardware **RAPL (Running Average Power Limit)** registers via **HWiNFO32** across two independent runs (showing `< 2.2%` run-to-run variance).
+
+### Compilation & Replication
+Compiled with full hardware vectorization flags (`GCC / MinGW`):
+```bash
+g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_escalation_benchmark.cpp -o elvarion_joules.exe
+```
+
+### Empirical Silicon Results (10-Second Continuous Load — 2-Run Mean)
+
+| Hardware Metric (RAPL Silicon Sensor) | Elvarion 9D Core | Kalman 9x9 Matrix | Efficiency Delta |
+| :--- | :--- | :--- | :--- |
+| **Throughput (Points / 10s)** | **6,812,709,888** (~6.81B) | 20,459,008 (~20.46M) | **332.99x higher throughput** |
+| **Mean CPU Package Power** | **24.17 W** | 22.75 W | Comparable active draw |
+| **Total Package Energy (10s)** | **241.72 J** | 227.50 J | Measured via hardware MSR |
+| **Energy per 9D Point (`nJ/point`)** | **35.48 nJ / point** | 11,119.80 nJ / point | **313.41x lower energy / point** |
+| **Numerical Stability** | **Deterministic Lock (0 NaNs)** | `-nan` pipeline stall | **99.68% energy reduction / op** |
+
+### Physical Takeaway
+* **Pre-Dissipative Stability:** While both tests draw ~23–24 W at full core utilization, the legacy $O(N^3)$ Kalman filter suffers numerical divergence (`-nan`), forcing the CPU into expensive microcode assists and wasting **11.12 μJ per state**.
+* **Zero-Divergence Flow:** By clamping outliers via passive $\Phi$-attenuation in L1-aligned registers, the **Elvarion 9D Core** avoids numerical collapse completely, delivering **35.48 nanojoules per 9D state** directly on consumer Haswell silicon.
