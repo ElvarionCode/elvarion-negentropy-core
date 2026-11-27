@@ -158,7 +158,8 @@ g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_joules_benchmark.cpp  -o 
 | **Mean CPU Package Power** | **24.17 W** | 22.75 W | Comparable active draw |
 | **Total Package Energy (10s)** | **241.72 J** | 227.50 J | Measured via hardware MSR |
 | **Energy per 9D Point (`nJ/point`)** | **35.48 nJ / point** | 11,119.80 nJ / point | **313.41x lower energy / point** |
-| **Numerical Stability** | **Deterministic Lock (0 NaNs)** | `-nan` pipeline stall | **99.68% energy reduction / op** |
+| **Numerical Stability** | **Deterministic Lock (0 NaNs)** | `-nan` pipeline stall | **99.68% energy reduction / op** | ### Build & Toolchain
+- Tested with **GCC 4.9 (`i386`)** using flags: `-std=c++11 -O3 -Wall -Wextra`
 
 ### Physical Takeaway
 * **Pre-Dissipative Stability:** While both tests draw ~23–24 W at full core utilization, the legacy $O(N^3)$ Kalman filter suffers numerical divergence (`-nan`), forcing the CPU into expensive microcode assists and wasting **11.12 μJ per state**.
