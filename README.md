@@ -159,8 +159,23 @@ g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_joules_benchmark.cpp  -o 
 | **Total Package Energy (10s)** | **241.72 J** | 227.50 J | Measured via hardware MSR |
 | **Energy per 9D Point (`nJ/point`)** | **35.48 nJ / point** | 11,119.80 nJ / point | **313.41x lower energy / point** |
 | **Numerical Stability** | **Deterministic Lock (0 NaNs)** | `-nan` pipeline stall | **99.68% energy reduction / op** | ### Build & Toolchain
-- Tested with **GCC 4.9 (`i386`)** using flags: `-std=c++11 -O3 -Wall -Wextra`
 
 ### Physical Takeaway
 * **Pre-Dissipative Stability:** While both tests draw ~23–24 W at full core utilization, the legacy $O(N^3)$ Kalman filter suffers numerical divergence (`-nan`), forcing the CPU into expensive microcode assists and wasting **11.12 μJ per state**.
 * **Zero-Divergence Flow:** By clamping outliers via passive $\Phi$-attenuation in L1-aligned registers, the **Elvarion 9D Core** avoids numerical collapse completely, delivering **35.48 nanojoules per 9D state** directly on consumer Haswell silicon.
+
+* ## Deterministic Telemetry & 9D Core Benchmark
+
+> **Note on diagram & units:** The header illustration is a conceptual diagram of zero-heap deterministic flow. In our empirical benchmarks, **35.48** vs. **11,119.80** refers to energy per state (**nJ / point**) measured via hardware RAPL counters, while the ring buffer uses a **64 B** cache-aligned payload (`alignas(64)`) with zero runtime heap allocations.
+
+### Hardware Energy & Throughput (Intel Core i7-4770, 10s Continuous Stress, HWiNFO32 MSR)
+- **Elvarion 9D Core:** `35.48 nJ / point` | `24.17 W` avg power | `6.81B` states processed | `0 NaN`
+- **Kalman 9x9 Matrix:** `11,119.80 nJ / point` | `22.75 W` avg power | `20.46M` states processed | `-nan` pipeline collapse
+- **Efficiency / Throughput Gain:** **`332.99x`** in our benchmark comparison without numerical pipeline collapse.
+
+### Cycle-Level Loop Profile (1,000,000 Iterations)
+- **Min:** `36` cycles | **Avg:** `43.82` cycles | **Max:** `92,690` cycles (`~19.65 ms` total loop time)
+- Tight `36–44` cycle core execution with zero heap allocations (`new`/`malloc`), while `Max` (`92,690` cycles) reflects non-RTOS host interrupts and OS jitter—highlighting why flight-critical systems pair deterministic code with real-time OS scheduling, hardware power/thermal design, and fault isolation.
+
+- ### Build & Toolchain
+- Tested with **GCC 4.9 (`i386`)** using flags: `-std=c++11 -O3 -Wall -Wextra`
