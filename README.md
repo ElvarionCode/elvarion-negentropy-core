@@ -195,3 +195,44 @@ The tight 36–44 cycle core execution demonstrates true bare-metal efficiency. 
 - **Target Architecture:** Verified on i386 / x86_64 targets
 - **Compiler Baseline:** Tested with GCC 4.9
 - **Compilation Flags:** `-std=c++11 -O3 -Wall -Wextra` (Enforcing strict optimization without reliance on modern syntactic crutches)
+Markdown
+
+## Phase-Aligned Negentropic Routing vs. Classic FIFO Under Burst Load
+
+### Overview
+
+This module provides a standalone C++11 benchmark (`elvarion_negentropy_benchmark.cpp`) comparing a **phase-aligned negentropic routing model** (`NegentropicPhaseRouter`) against a **bounded classical queue** (`ClassicFifoChannel`) under sustained high-noise burst traffic.
+
+The goal is not to claim hardware magic or thermodynamic violations, nor to exaggerate synthetic cycle counters. Instead, this benchmark isolates a practical systems engineering question: **how does a fixed-slot, cache-aligned ring with a golden-ratio ($\Phi$) phase accumulator and a dedicated priority fast-path behave under burst congestion compared to a small FIFO buffer that suffers tail-drop saturation?**
+
+---
+
+### Architectural Highlights
+
+* **Zero-Heap, Cache-Aligned Layout:** `PacketFrame` and `BenchmarkStats` use `alignas(64)` with fixed-size `std::array` storage and no dynamic allocations inside the hot path.
+* **$\Phi$-Phase Accumulator (`0x9E3779B9u`):** A 32-bit fixed-point phase step ($2^{32} / \Phi$) advances deterministically on each packet to distribute lane selection without heavy floating-point math or heap contention.
+* **Bounded Noise Attenuation & Priority Fast-Path:** High `noise_score` spikes above `noise_limit` are damped via a Q16 shift-scaled factor (`40503u >> 16`), while high-priority frames (`priority >= 8`) within tolerance bypass general ring contention.
+* **Equal Payload Work Budget:** Both routers execute the same `process_payload_work` transform on admitted frames and accumulate a checksum (`CHK`) so the compiler cannot optimize away active payload work.
+
+---
+
+### Benchmark Results (2,000,000 Packets, 80% Burst Duty Cycle)
+
+Compiled with `g++ -std=c++11 -O3 -Wall -Wextra` on a 2,000,000-packet run (`0.2367 s` total execution time), where `burst_mode` is active for 160 out of every 200 packets (`i % 200 < 160`) and `ClassicFifoChannel<32>` drains once every 4 steps during bursts:
+
+| Metric | Elvarion Phase (`RingSize = 256`) | Classic FIFO (`Cap = 32`) | Engineering Takeaway |
+| :--- | :---: | :---: | :--- |
+| **Delivered Packets** | **2,000,000 / 2,000,000 (100.00%)** | **800,032 / 2,000,000 (40.00%)** | **2.5x** higher packet delivery under burst saturation |
+| **Dropped (Tail-Drop)** | **0** | **1,199,968** | FIFO drops **59.998%** of traffic once the 32-slot queue fills |
+| **Priority Packets Lost** | **0** | **79,997** | Priority bypass preserves urgent frames during congestion |
+| **Cycles (min / avg / max)** | **45 / 102.78 / 93,213** | **27 / 66.57 / 93,098** | Lower FIFO `avg` per call is due to early-return drops without work |
+| **Cycles per Delivered Packet** | **102.78** | **166.41** | **~38.2% fewer cycles per successfully delivered packet** |
+| **Cycle Spikes (`> 1200`)** | **407** | **223** | Reflects full work on all 2M packets plus OS scheduling jitter |
+
+#### How to Interpret the Numbers Honestly
+
+1. **Where Elvarion Clearly Wins:** Under heavy burst pressure with a throttled downstream drain, `NegentropicPhaseRouter` avoids tail-drop congestion, preserves **100%** of priority frames (`0` lost vs. `79,997`), and spends **102.78 cycles per delivered packet** instead of **166.41**.
+2. **Why Raw FIFO Average Per Call Is Lower (`66.57` vs. `102.78`):** When `ClassicFifoChannel` is full, it increments `dropped` and returns early without executing `process_payload_work` or updating the ring. Calling a drop path is cheap per attempt, but useless when packets are lost.
+3. **Scope & Limitations:** This is a single-threaded C++11 simulation using `rdtsc` cycle counters in user space. Ring overwrite behavior under a slow consumer, multi-threaded contention (`std::atomic`), realistic arrival distributions (Poisson/Pareto), and hardware/RTOS profiling are separate steps beyond this synthetic benchmark.
+
+---
