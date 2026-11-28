@@ -164,7 +164,6 @@ g++ -O3 -std=c++11 -march=haswell -ffast-math drone_9d_joules_benchmark.cpp  -o 
 * **Pre-Dissipative Stability:** While both tests draw ~23–24 W at full core utilization, the legacy $O(N^3)$ Kalman filter suffers numerical divergence (`-nan`), forcing the CPU into expensive microcode assists and wasting **11.12 μJ per state**.
 * **Zero-Divergence Flow:** By clamping outliers via passive $\Phi$-attenuation in L1-aligned registers, the **Elvarion 9D Core** avoids numerical collapse completely, delivering **35.48 nanojoules per 9D state** directly on consumer Haswell silicon.
 
-Markdown
 
 ## The Negentropic Baseline: Eliminating State Impedance in Deep Space Telemetry
 
@@ -195,7 +194,6 @@ The tight 36–44 cycle core execution demonstrates true bare-metal efficiency. 
 - **Target Architecture:** Verified on i386 / x86_64 targets
 - **Compiler Baseline:** Tested with GCC 4.9
 - **Compilation Flags:** `-std=c++11 -O3 -Wall -Wextra` (Enforcing strict optimization without reliance on modern syntactic crutches)
-Markdown
 
 ## Phase-Aligned Negentropic Routing vs. Classic FIFO Under Burst Load
 
