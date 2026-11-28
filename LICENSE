@@ -659,3 +659,13 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
+
+## Licensing & Commercial Integration
+
+This repository is available under a **Dual-Licensing Model**:
+
+1. **Open-Source / Research License (GNU GPLv3 / AGPLv3):** Free to use, study, and benchmark for open-source projects, academic research, and internal evaluation, provided that any derivative work is also distributed under the same open-source license.
+
+2. **Commercial / Proprietary License:** If you wish to integrate the **Elvarion Negentropy Core** (9D Spatial Core, BMS Electro-Thermal Core, or Phase-Aligned Router) into closed-source commercial hardware, flight software, or proprietary products without open-source disclosure obligations, a separate commercial license is required.
+
+For **Enterprise Licensing**, **Custom Hardware Parameterization**, or **RTOS Integration**, please contact the author directly via GitHub (`@ElvarionCode`) or directly via mail code@elvarion.rs
